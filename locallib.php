@@ -62,11 +62,6 @@ function equella_get_course_contents($courseid, $sectionid) {
             $sectionvalues->folders = array();
             $sectioncontents = array();
 
-			// added by Franz Prsn
-            if (!isset($modinfo->sections[$section->section])) {
-                $modinfo->sections[$section->section] = array();
-            }
-
             // foreach ($modinfo->sections[$section->section] as $cmid) {
             // $cm = $modinfo->cms[$cmid];
 
@@ -218,21 +213,7 @@ function equella_parse_query($str) {
     return $op;
 }
 function equella_build_integration_url($args, $appendtoken = true) {
-    // modified by Franz
-    global $COURSE, $USER, $CFG, $DB;
-
-    // get course information - added by Franz
-    $idnumber = $COURSE->idnumber;
-    $id = $COURSE->id;
-    $short = $COURSE->shortname;
-    $full = $COURSE->fullname;
-
-    $integrationXML = '<xml><integration>
-        <moodlecourseidnumber>'.$idnumber.'</moodlecourseidnumber>
-        <moodlecourseid>'.$id.'</moodlecourseid>
-        <moodlecourseshortname>'.$short.'</moodlecourseshortname>
-        <moodlecoursefullname>'.$full.'</moodlecoursefullname>
-    </integration></xml>';
+    global $USER, $CFG, $DB;
 
     $callbackurlparams = array('course' => $args->course,'section' => $args->section);
 
@@ -263,15 +244,13 @@ function equella_build_integration_url($args, $appendtoken = true) {
         'attachmentUuidUrls' => 'true',
         'returnprefix' => 'tle',
         'template' => 'standard',
-    //    'courseId' => $args->course, // removed/chgd by Franz
-        'courseId' => equella_get_courseId($args->course),
+        'courseId' => $args->course,
         'courseCode' => $coursecode,
         'action' => $CFG->equella_action,
         'selectMultiple' => 'true',
         'cancelDisabled' => 'true',
         'returnurl' => $callbackurl->out(false),
         'cancelurl' => $cancelurl->out(false),
-        'itemXml' => $integrationXML) // added by Franz
     );
 
     if ($appendtoken) {
@@ -303,7 +282,6 @@ function equella_lti_params($equella, $course, $extra = array()) {
 
     $role = equella_lti_roles($USER, $equella->cmid, $equella->course);
 
-// Franz: changes by Clem?:  $requestparams = array('resource_link_id' => $equella->id,'resource_link_title' => $equella->name,'resource_link_description' => $equella->intro,'user_id' => $USER->id,'roles' => $role,'context_id' => $course->id,'context_label' => $course->shortname,
     $requestparams = array('resource_link_id' => $CFG->siteidentifier . ':mod_equella:' . $equella->cmid,'resource_link_title' => $equella->name,'resource_link_description' => $equella->intro,'user_id' => $USER->id,'roles' => $role,'context_id' => $course->id,'context_label' => $course->shortname,
         'context_title' => $course->fullname,'launch_presentation_locale' => current_language());
     if (!empty($equella->popup)) {
@@ -496,7 +474,6 @@ class equella_lti_grading {
         $codemajor = strtolower($codemajor);
         $xml = <<<XML
 <?xml version="1.0" encoding="UTF-8"?>
-// by Franz : to check
 <imsx_POXEnvelopeResponse xmlns = "http://www.imsglobal.org/services/ltiv1p1/xsd/imsoms_v1p0">
     <imsx_POXHeader>
         <imsx_POXResponseHeaderInfo>

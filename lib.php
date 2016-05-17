@@ -36,7 +36,7 @@ define('EQUELLA_CONFIG_SELECT_RESTRICT_PACKAGES_ONLY', 'packageonly');
 define('EQUELLA_CONFIG_INTERCEPT_NONE', 0);
 define('EQUELLA_CONFIG_INTERCEPT_ASK', 1);
 define('EQUELLA_CONFIG_INTERCEPT_FULL', 2);
-define('EQUELLA_CONFIG_INTERCEPT_META', 3);
+define('EQUELLA_CONFIG_INTERCEPT_META', 3); 
 
 define('EQUELLA_ACTION_SELECTORADD', 'selectOrAdd');
 define('EQUELLA_ACTION_STRUCTURED', 'structured');
@@ -407,7 +407,7 @@ if (isset($CFG->equella_intercept_files) && (int)$CFG->equella_intercept_files =
  * @return array containing details of the files / types the mod can handle
  */
 if (isset($CFG->equella_intercept_files) && (int)$CFG->equella_intercept_files == EQUELLA_CONFIG_INTERCEPT_META) {
-
+       
     function equella_dndupload_register() {
        global $PAGE;
        $PAGE->requires->yui_module('moodle-mod_equella-dndupload', 'M.mod_equella.dndupload.init');
@@ -445,20 +445,20 @@ function equella_dndupload_handle($uploadinfo) {
         $params['moodlecourseidnumber'] = $uploadinfo->course->idnumber;
         $params['filesize'] = $file->get_filesize();
         $mimetype = $file->get_mimetype();
-
+        
         if (isset($uploadinfo->copyright)){
         	$params['copyrightflag'] = $uploadinfo->copyright;
         }
-        if (isset($uploadinfo->itemdescription)) {
-        	$params['itemdescription'] = $uploadinfo->itemdescription;
+        if (isset($uploadinfo->itemdescription)) { 
+        	$params['itemdescription'] = $uploadinfo->itemdescription; 
         }
-   	 	if (isset($uploadinfo->displayname)) {
+   	 	if (isset($uploadinfo->displayname)) { 
         	$params['displayname'] = $uploadinfo->displayname;
         }
-    	if (isset($uploadinfo->itemkeyword)) {
-        	$params['itemkeyword'] = $uploadinfo->itemkeyword;
+    	if (isset($uploadinfo->itemkeyword)) { 
+        	$params['itemkeyword'] = $uploadinfo->itemkeyword; 
         }
-
+        
         $info = equella_rest_api::contribute_file_with_shared_secret($file->get_filename(), $handle, $params);
         if (isset($info->error)) {
             throw new equella_exception($info->error_description);
@@ -513,7 +513,7 @@ function equella_get_view_actions() {
  * @return array
  */
 function equella_get_post_actions() {
-    return array('add','update','delete','update equella resource','delete equella resource','add equella resource','add EQUELLA');
+    return array('add','update','delete','update equella resource','delete equella resource','add equella resource');
 }
 
 /**

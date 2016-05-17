@@ -16,7 +16,6 @@
 require_once ('../../config.php');
 require_once ('lib.php');
 require_once ('locallib.php');
-// Franz to remove?
 require_once ($CFG->libdir . '/completionlib.php');
 
 require_login();
