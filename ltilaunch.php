@@ -1,6 +1,5 @@
 <?php
-
-// This file is part of the EQUELLA Moodle Integration - https://github.com/equella/moodle-module
+// This file is part of the EQUELLA module - http://git.io/vUuof
 //
 // Moodle is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -17,6 +16,9 @@
 require_once ('../../config.php');
 require_once ('lib.php');
 require_once ('locallib.php');
+// Franz to remove?
+require_once ($CFG->libdir . '/completionlib.php');
+
 require_login();
 
 $action = optional_param('action', 'view', PARAM_ACTION);
@@ -36,9 +38,25 @@ if ($action == 'view') {
     $equella->cmid = $cmid;
     $equella->course = $course->id;
     $params = equella_lti_params($equella, $course);
-    
-    add_to_log($course->id, "equella", "view equella resource", "view.php?id=$cm->id", $equella->id, $cm->id);
-    
+
+    if (class_exists('mod_equella\\event\\course_module_viewed')) {
+        $eventparams = array(
+            'context' => $context,
+            'objectid' => $equella->id
+        );
+        $event = \mod_equella\event\course_module_viewed::create($eventparams);
+        $event->add_record_snapshot('course_modules', $cm);
+        $event->add_record_snapshot('course', $course);
+        $event->add_record_snapshot('equella', $equella);
+        $event->trigger();
+    } else {
+        add_to_log($course->id, "equella", "view equella resource", "view.php?id=$cm->id", $equella->id, $cm->id);
+    }
+
+    // Update 'viewed' state if required by completion system
+    $completion = new completion_info($course);
+    $completion->set_module_viewed($cm);
+
     echo '<html><body>';
     echo equella_lti_launch_form($equella->url, $params);
     echo '</body></html>';

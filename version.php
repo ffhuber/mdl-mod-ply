@@ -1,6 +1,5 @@
 <?php
-
-// This file is part of the EQUELLA Moodle Integration - https://github.com/equella/moodle-module
+// This file is part of the EQUELLA module - http://git.io/vUuof
 //
 // Moodle is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -16,6 +15,6 @@
 // along with Moodle. If not, see <http://www.gnu.org/licenses/>.
 defined('MOODLE_INTERNAL') || die();
 
-$module->version   = 2014091800;
-$module->requires  = 2012120300;    // Requires this Moodle version
-$module->component = 'mod_equella'; // Full name of the plugin (used for diagnostics)
+$plugin->version   = 2016031000;
+$plugin->requires  = 2014041101;    // Requires this Moodle version
+$plugin->component = 'mod_equella'; // Full name of the plugin (used for diagnostics)

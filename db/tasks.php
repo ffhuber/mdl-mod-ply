@@ -13,6 +13,16 @@
 //
 // You should have received a copy of the GNU General Public License
 // along with Moodle. If not, see <http://www.gnu.org/licenses/>.
-header('content-type: text/plain');
+defined('MOODLE_INTERNAL') || die();
 
-readfile('ChangeLog');
+$tasks = array(
+    array(
+        'classname' => 'mod_equella\task\cron_task',
+        'blocking' => 0,
+        'minute' => '*',
+        'hour' => '*',
+        'day' => '*',
+        'month' => '*',
+        'dayofweek' => '*'
+    ),
+);

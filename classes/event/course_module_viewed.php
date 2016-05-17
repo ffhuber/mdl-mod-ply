@@ -13,6 +13,23 @@
 //
 // You should have received a copy of the GNU General Public License
 // along with Moodle. If not, see <http://www.gnu.org/licenses/>.
-header('content-type: text/plain');
 
-readfile('ChangeLog');
+namespace mod_equella\event;
+
+defined('MOODLE_INTERNAL') || die();
+
+if (class_exists('core\\event\\course_module_viewed')) {
+    class course_module_viewed extends \core\event\course_module_viewed {
+
+        /**
+         * Init method.
+         *
+         * @return void
+         */
+        protected function init() {
+            $this->data['objecttable'] = 'equella';
+            $this->data['crud'] = 'r';
+            $this->data['edulevel'] = self::LEVEL_PARTICIPATING;
+        }
+    }
+}

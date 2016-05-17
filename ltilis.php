@@ -1,6 +1,5 @@
 <?php
-
-// This file is part of the EQUELLA Moodle Integration - https://github.com/equella/moodle-module
+// This file is part of the EQUELLA module - http://git.io/vUuof
 //
 // Moodle is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -14,6 +13,7 @@
 //
 // You should have received a copy of the GNU General Public License
 // along with Moodle. If not, see <http://www.gnu.org/licenses/>.
+define('AJAX_SCRIPT', true);
 require_once (dirname(__FILE__) . "/../../config.php");
 require_once ($CFG->dirroot . '/mod/equella/locallib.php');
 

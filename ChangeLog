@@ -1,18 +1,117 @@
+2015-07-23  Dongsheng Cai  <dongsheng.cai@pearson.com>
+
+	EQ-2277 Add capability requirements to equella web service definition
+
+2015-07-20  Dongsheng Cai  <dongsheng.cai@pearson.com>
+
+	EQ-2269 Add filename to module db record
+
+2015-06-11  Dongsheng Cai  <dongsheng.cai@pearson.com>
+
+	Ability to disable self signed ssl certificate check
+
+2015-05-13  Dongsheng Cai  <dongsheng.cai@pearson.com>
+
+	New release requires 2.7 and up.
+
+2015-05-12  Dongsheng Cai  <dongsheng.cai@pearson.com>
+
+	Clean up cancel.php and github url
+
+	moodleform_mod::add_intro_editor() is deprecated
+	use standard_intro_elements() instead
+
+2015-04-23  Dongsheng Cai  <dongsheng.cai@pearson.com>
+
+	EQ-2124 Web Service: Fixed sorting field name
+
+	EQ-2121 Web Service: Fix records count for paging
+
+2015-04-22  Dongsheng Cai  <dongsheng.cai@pearson.com>
+
+	Fix data records missing error in webservice
+
+2015-04-14  Dongsheng Cai  <dongsheng.cai@pearson.com>
+
+	EQ-2097 Store resource info sent from EQUELLA
+
+	EQ-2097 Hack to display mp4 icon in moodle
+
+	EQ-2073 Assign mimetype when using push-to-lms
+
+2015-03-31  Dongsheng Cai  <dongsheng.cai@pearson.com>
+
+	EQ-2067 "options" field uses larger textarea
+
+2015-03-05  Dongsheng Cai  <dongsheng.cai@pearson.com>
+
+	fix is_https()
+
+2015-01-22  Dongsheng Cai  <dongsheng.cai@pearson.com>
+
+	EQ-1931 Set mimetype for drag and drop resources
+
+	EQ-1465 Show recent equella modules in moodle recent report page
+
+2015-01-10  Dongsheng Cai  <dongsheng.cai@pearson.com>
+
+	Fix generator url
+
+	Add a tool to generate module instances
+
+2015-01-08  Dongsheng Cai  <dongsheng.cai@pearson.com>
+
+	EQ-1862 Integrated LTI testing tools
+
+	Add css style to LTI messages
+
+2015-01-07  Dongsheng Cai  <dongsheng.cai@pearson.com>
+
+	EQ-1862 Fix lti outcome parsing library
+
+	equella module cron
+
+2014-09-27  Dongsheng Cai  <dongsheng.cai@pearson.com>
+
+	EQ-1583 Moodle 2.7 Event APIs #33
+	Replace deprecated APIs
+
+2014-12-02  Dongsheng Cai  <dongsheng.cai@pearson.com>
+
+	Escape ltilaunch.php url parameters
+
+2014-11-26  Dongsheng Cai  <dongsheng.cai@pearson.com>
+
+	EQ-1676 list_courses_for_user returns course id number
+
+2014-10-22  Dongsheng Cai  <dongsheng.cai@pearson.com>
+
+	Fix redirect url
+
+2014-10-21  Dongsheng Cai  <dongsheng.cai@pearson.com>
+
+	EQ-1663 Load iframe after resizing
+
+2014-10-15  Alex Rowe  <arowe@studygroup.com>
+
+	Add required functions for the completion library
+	fixes #34 #35
+
 2014-09-18  Dongsheng Cai  <dongsheng.cai@pearson.com>
 
 	EQ-1607 Remove intercept files option
 
 2014-09-12  Dongsheng Cai  <dongsheng.cai@pearson.com>
 
-	EQ-1599 Fix find all usage web service
+	EQ-1599 Add missing module title in find_all_usage.
 
-	Description should be text only.
+	Description in webservice should be plain text.
 
 2014-09-11  Dongsheng Cai  <dongsheng.cai@pearson.com>
 
-	Output exception error message to equella
+	Output detailed webservice error message
 
-	EQ-1598 Fix webservice for moodle 2.5
+	EQ-1598 Fix webservice error in moodle 2.5
 
 2014-09-10  Dongsheng Cai  <dongsheng.cai@pearson.com>
 

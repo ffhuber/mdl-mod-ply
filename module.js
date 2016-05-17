@@ -11,23 +11,17 @@ M.mod_equella.submitform = function(Y, formid) {
 M.mod_equella.display_equella = function(Y, equellaContainer, width, minheight,
 	title, redirecturl) {
     var bodyNode = Y.one('body');
-    var initialheight = 700;
+    var iframeid = 'resourceobject';
+    var initialheight = Y.one('body').get('winHeight') * 0.9;
     bodyNode.addClass('equella-page');
+
     var generate_html = function(append) {
-	var iframe = '';
-	//if (Y.UA.ie > 0) {
-	iframe = '<div class="resourcecontent resourcegeneral"><iframe id="resourceobject" src="'
-		+ redirecturl + '"></iframe></div>';
-	//} else {
-	//var param = '<param name="src" value="'+redirecturl+'" />';
-	//iframe = ' <div class="resourcecontent resourcegeneral"><object id="resourceobject" data="'+redirecturl+'" type="text/html">'+param+'</object></div>';
-	//}
+	var iframe = '<div class="resourcecontent resourcegeneral"><iframe id="'+iframeid+'"></iframe></div>';
 
 	var html = Y.Node.create('<div id="' + equellaContainer
 		+ '"><div class="yui3-widget-hd">' + title
 		+ '</div><div class="yui3-widget-bd">' + iframe
 		+ '</div></div>');
-	var bodyNode = Y.one(document.body);
 	if (append) {
 	    bodyNode.append(html);
 	}
@@ -69,16 +63,19 @@ M.mod_equella.display_equella = function(Y, equellaContainer, width, minheight,
 	var footerheight = get_htmlelement_size('page-footer', 'height');
 	var newheight;
 	if (initialize) {
-	    //newheight = Y.one('body').get('winHeight') * 0.9;
-	    //if (newheight < minheight) {
-	    //newheight = minheight;
-	    //}
-	    newheight = initialheight;
+            if (initialheight < minheight) {
+                newheight = minheight;
+            } else {
+                newheight = initialheight;
+            }
 	} else {
 	    newheight = get_htmlelement_size(parentContainer, 'height');
 	}
-	newheight = newheight - 50;
+        newheight = newheight - 50;
 	obj.setStyle('height', newheight + 'px');
+	if (initialize) {
+            obj.setAttribute('src', redirecturl);
+        }
     };
     Y.use('panel', 'dd-plugin', 'resize-plugin', 'event', function(Y) {
 	var body = Y.one('body');
@@ -95,7 +92,7 @@ M.mod_equella.display_equella = function(Y, equellaContainer, width, minheight,
 	    srcNode : '#' + equellaContainer,
 	    width : width,
 	    height : initialheight,
-	    zIndex : 1031,
+	    zIndex : 4031,
 	    xy : [ x, y ],
 	    centered : false,
 	    modal : true,
@@ -106,13 +103,13 @@ M.mod_equella.display_equella = function(Y, equellaContainer, width, minheight,
 	});
 	panel.show();
 	panel.resize.on('resize:resize', function(e) {
-	    resize_embedded('resourceobject', equellaContainer, false);
+	    resize_embedded(iframeid, equellaContainer, false);
 	});
 	// fix layout if window resized too
 	window.onresize = function() {
-	    resize_embedded('resourceobject', equellaContainer, false);
+	    resize_embedded(iframeid, equellaContainer, false);
 	};
-	resize_embedded('resourceobject', equellaContainer, true);
+	resize_embedded(iframeid, equellaContainer, true);
 	var button = Y.one('#openequellachooser');
 	button.on('click', function(e) {
 	    panel.show();

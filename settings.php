@@ -1,6 +1,5 @@
 <?php
-
-// This file is part of the EQUELLA Moodle Integration - https://github.com/equella/moodle-module
+// This file is part of the EQUELLA module - http://git.io/vUuof
 //
 // Moodle is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -44,7 +43,7 @@ if ($ADMIN->fulltree) {
 
     $settings->add(new admin_setting_configselect('equella_select_restriction', ecs('restriction.title'), ecs('restriction.desc'), EQUELLA_CONFIG_SELECT_RESTRICT_NONE, $restrictionOptions));
 
-    $settings->add(new admin_setting_configtext('equella_options', ecs('options.title'), ecs('options.desc'), ''));
+    $settings->add(new admin_setting_configtextarea('equella_options', ecs('options.title'), ecs('options.desc'), ''));
 
     $settings->add(new admin_setting_configtext('equella_admin_username', ecs('adminuser.title'), ecs('adminuser.desc'), ''));
     $settings->add(new admin_setting_configcheckbox('equella_open_in_new_window', ecs('open.newwindow'), '', 1));
@@ -77,19 +76,20 @@ if ($ADMIN->fulltree) {
 
     $rolearchetypes = get_role_archetypes();
     foreach(get_all_editing_roles() as $role) {
-        $sectionname = 'equella_' . $role->shortname . '_role_group';
-        if (in_array($role->shortname, $rolearchetypes)) {
-            $heading = ecs('group.' . $role->shortname);
+        $shortname = clean_param($role->shortname, PARAM_ALPHANUM);
+        if (in_array($shortname, $rolearchetypes)) {
+            $heading = ecs('group.' . $shortname);
         } else {
-            $heading = ecs('group.noname', $role->shortname);
+            $heading = ecs('group.noname', $shortname);
             if (!empty($role->name)) {
                 $heading = ecs('group', $role->name);
             }
         }
+        $sectionname = 'equella_' . $shortname . '_role_group';
         $settings->add(new equella_setting_left_heading($sectionname, $heading, ''));
 
-        $settings->add(new admin_setting_configtext("equella_{$role->shortname}_shareid", ecs('sharedid.title'), $description, $defaultvalue, PARAM_TEXT));
-        $settings->add(new admin_setting_configtext("equella_{$role->shortname}_sharedsecret", ecs('sharedsecret.title'), $description, $defaultvalue, PARAM_TEXT));
+        $settings->add(new admin_setting_configtext("equella_{$shortname}_shareid", ecs('sharedid.title'), $description, $defaultvalue, PARAM_TEXT));
+        $settings->add(new admin_setting_configtext("equella_{$shortname}_sharedsecret", ecs('sharedsecret.title'), $description, $defaultvalue, PARAM_TEXT));
     }
     // ///////////////////////////////////////////////////////////////////////////////
     //
@@ -99,6 +99,7 @@ if ($ADMIN->fulltree) {
     $choices = array(
         EQUELLA_CONFIG_INTERCEPT_NONE => get_string('interceptnone', 'equella'),
         EQUELLA_CONFIG_INTERCEPT_ASK => get_string('interceptask', 'equella'),
+        EQUELLA_CONFIG_INTERCEPT_META => get_string('interceptmetadata', 'equella')
         //EQUELLA_CONFIG_INTERCEPT_FULL => get_string('interceptauto', 'equella')
     );
     $intercepttype = new admin_setting_configselect('equella_intercept_files', get_string('interceptfiles', 'equella'), get_string('interceptfilesintro', 'equella'), 0, $choices);

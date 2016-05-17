@@ -1,6 +1,5 @@
 <?php
-
-// This file is part of the EQUELLA Moodle Integration - https://github.com/equella/moodle-module
+// This file is part of the EQUELLA module - http://git.io/vUuof
 //
 // Moodle is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -18,7 +17,12 @@ defined('MOODLE_INTERNAL') || die();
 require_once ($CFG->dirroot . '/mod/equella/common/lib.php');
 require_once ($CFG->dirroot . '/lib/filelib.php');
 require_once ($CFG->dirroot . '/course/lib.php');
+require_once ($CFG->libdir.'/gradelib.php');
 require_once (dirname(__FILE__) . '/equella_rest_api.php');
+
+define('EQUELLA_ITEM_TYPE', 'mod');
+define('EQUELLA_ITEM_MODULE', 'equella');
+define('EQUELLA_SOURCE', 'mod/equella');
 
 // This must be FALSE in released code
 define('EQUELLA_DEV_DEBUG_MODE', false);
@@ -32,6 +36,7 @@ define('EQUELLA_CONFIG_SELECT_RESTRICT_PACKAGES_ONLY', 'packageonly');
 define('EQUELLA_CONFIG_INTERCEPT_NONE', 0);
 define('EQUELLA_CONFIG_INTERCEPT_ASK', 1);
 define('EQUELLA_CONFIG_INTERCEPT_FULL', 2);
+define('EQUELLA_CONFIG_INTERCEPT_META', 3);
 
 define('EQUELLA_ACTION_SELECTORADD', 'selectOrAdd');
 define('EQUELLA_ACTION_STRUCTURED', 'structured');
@@ -67,9 +72,9 @@ function equella_supports($feature) {
             return true;
 
         case FEATURE_GRADE_HAS_GRADE:
-            return false;
+            return true;
         case FEATURE_GRADE_OUTCOMES:
-            return false;
+            return true;
 
         default:
             return null;
@@ -89,11 +94,18 @@ function equella_get_window_options() {
 
     return array('width' => $width,'height' => $height,'resizable' => 1,'scrollbars' => 1,'directories' => 0,'location' => 0,'menubar' => 0,'toolbar' => 0,'status' => 0);
 }
-function equella_get_courseId($courseid) {
+
+/**
+ * Return course code (aka course id number)
+ *
+ * @param int $courseid
+ * @return string
+ */
+function equella_get_coursecode($courseid) {
     global $DB;
-    $record = $DB->get_record("course", array('id' => $courseid));
-    return $record->idnumber;
+    return $DB->get_field('course', 'idnumber', array('id' => $courseid));
 }
+
 function equella_add_instance($equella, $mform = null) {
     global $DB, $USER, $CFG;
     $equella->timecreated = time();
@@ -197,14 +209,7 @@ function equella_get_coursemodule_info($coursemodule) {
     $info = new cached_cm_info();
 
     if ($resource = $DB->get_record("equella", array("id" => $coursemodule->instance))) {
-        require_once ($CFG->libdir . '/filelib.php');
-
-        // $url = $resource->url;
-        // if( $ind = strrpos($url, '?') ) {
-        // $url = substr($url, 0, $ind);
-        // }
-        // $info->icon = equella_guess_icon($url, 24);
-        $info->icon = file_mimetype_icon($resource->mimetype, 24);
+        $info->icon = equella_guess_icon($resource, 24);
         if ($coursemodule->showdescription) {
             $info->content = format_module_intro('equella', $resource, $coursemodule->id, false);
         }
@@ -223,29 +228,43 @@ function equella_get_coursemodule_info($coursemodule) {
  * Optimised mimetype detection from general URL.
  * Copied from /mod/url/locallib.php
  *
- * @param $fullurl
- * @return string mimetype
+ * @param $equella stdclass
+ * @param $size int
+ * @return string
  */
-function equella_guess_icon($fullurl, $size = null) {
+function equella_guess_icon($equella, $size = 24) {
     global $CFG;
-    require_once ("$CFG->libdir/filelib.php");
 
-    if (substr_count($fullurl, '/') < 3 or substr($fullurl, -1) === '/') {
-        // Most probably default directory - index.php, index.html, etc. Return null because
-        // we want to use the default module icon instead of the HTML file icon.
-        return null;
+    $icon = null;
+    if (!empty($equella->filename)) {
+        if ('document/unknown' != mimeinfo('type', $equella->filename)) {
+            $icon = 'f/' . mimeinfo('icon' . $size, $equella->filename);
+        }
     }
 
-    $icon = file_extension_icon($fullurl, $size);
-    $htmlicon = file_extension_icon('.htm', $size);
-    $unknownicon = file_extension_icon('', $size);
-
-    // We do not want to return those icon types, the module icon is more appropriate.
-    if ($icon === $unknownicon || $icon === $htmlicon) {
-        return null;
+    if (empty($icon)) {
+        $mimetype = $equella->mimetype;
+        $icon = file_mimetype_icon($mimetype, $size);
     }
 
     return $icon;
+
+    //if (substr_count($fullurl, '/') < 3 or substr($fullurl, -1) === '/') {
+        //// Most probably default directory - index.php, index.html, etc. Return null because
+        //// we want to use the default module icon instead of the HTML file icon.
+        //return null;
+    //}
+
+    //$icon = file_extension_icon($fullurl, $size);
+    //$htmlicon = file_extension_icon('.htm', $size);
+    //$unknownicon = file_extension_icon('', $size);
+
+    //// We do not want to return those icon types, the module icon is more appropriate.
+    //if ($icon === $unknownicon || $icon === $htmlicon) {
+        //return null;
+    //}
+
+    //return $icon;
 }
 
 /**
@@ -383,6 +402,23 @@ if (isset($CFG->equella_intercept_files) && (int)$CFG->equella_intercept_files =
 }
 
 /**
+ * Register the ability to handle drag and drop file uploads with meta data
+ *
+ * @return array containing details of the files / types the mod can handle
+ */
+if (isset($CFG->equella_intercept_files) && (int)$CFG->equella_intercept_files == EQUELLA_CONFIG_INTERCEPT_META) {
+
+    function equella_dndupload_register() {
+       global $PAGE;
+       $PAGE->requires->yui_module('moodle-mod_equella-dndupload', 'M.mod_equella.dndupload.init');
+       //$PAGE->requires->strings_for_js(array('dndupload_resource', 'dndupload_equella', 'copyright', 'description', 'keyword'), 'mod_equella');
+        return array('files' => array(
+            array('extension' => '*', 'message' => get_string('dnduploadresourcemetadata', 'mod_equella'))
+        ));
+    }
+}
+
+/**
  * Handle a file that has been uploaded
  *
  * @param object $uploadinfo details of the file / content that has been uploaded
@@ -408,6 +444,21 @@ function equella_dndupload_handle($uploadinfo) {
         $params['moodlecourseid'] = $uploadinfo->course->id;
         $params['moodlecourseidnumber'] = $uploadinfo->course->idnumber;
         $params['filesize'] = $file->get_filesize();
+        $mimetype = $file->get_mimetype();
+
+        if (isset($uploadinfo->copyright)){
+        	$params['copyrightflag'] = $uploadinfo->copyright;
+        }
+        if (isset($uploadinfo->itemdescription)) {
+        	$params['itemdescription'] = $uploadinfo->itemdescription;
+        }
+   	 	if (isset($uploadinfo->displayname)) {
+        	$params['displayname'] = $uploadinfo->displayname;
+        }
+    	if (isset($uploadinfo->itemkeyword)) {
+        	$params['itemkeyword'] = $uploadinfo->itemkeyword;
+        }
+
         $info = equella_rest_api::contribute_file_with_shared_secret($file->get_filename(), $handle, $params);
         if (isset($info->error)) {
             throw new equella_exception($info->error_description);
@@ -427,6 +478,8 @@ function equella_dndupload_handle($uploadinfo) {
         $eqresource->name = $modulename;
         $eqresource->intro = $info->description;
         $eqresource->introformat = FORMAT_HTML;
+        $eqresource->mimetype = $mimetype;
+        $eqresource->filename = $file->get_filename();
         $item = array_pop($info->attachments);
         $eqresource->attachmentuuid = $item->uuid;
         $eqresource->url = $item->links->view;
@@ -461,4 +514,97 @@ function equella_get_view_actions() {
  */
 function equella_get_post_actions() {
     return array('add','update','delete','update equella resource','delete equella resource','add equella resource','add EQUELLA');
+}
+
+/**
+ * Get equella module recent activities
+ *
+ * @global object
+ * @global object
+ * @global object
+ * @global object
+ * @uses CONTEXT_MODULE
+ * @param array $activities Passed by reference
+ * @param int $index Passed by reference
+ * @param int $timemodified Timestamp
+ * @param int $courseid
+ * @param int $cmid
+ * @param int $userid
+ * @param int $groupid
+ * @return void
+ */
+function equella_get_recent_mod_activity(&$activities, &$index, $timestart, $courseid, $cmid, $userid=0, $groupid=0)  {
+    global $CFG, $COURSE, $USER, $DB;
+
+    if ($COURSE->id == $courseid) {
+        $course = $COURSE;
+    } else {
+        $course = $DB->get_record('course', array('id'=>$courseid));
+    }
+
+    $modinfo = get_fast_modinfo($course);
+    $cm = $modinfo->cms[$cmid];
+
+    $equella = $DB->get_record('equella', array('id' => $cm->instance), '*', MUST_EXIST);
+    if ($equella->timemodified < $timestart) {
+        // Remove the activity
+        unset($activities[$index--]);
+    }
+
+
+    return;
+}
+
+/**
+ * Create grade item for given equella.
+ *
+ * @param stdClass $equella record
+ * @param array $grades optional array/object of grade(s); 'reset' means reset grades in gradebook
+ * @return int 0 if ok, error code otherwise
+ */
+function equella_grade_item_update($eq, $grades=null) {
+    global $CFG;
+
+    if (!isset($eq->courseid)) {
+        $eq->courseid = $eq->course;
+    }
+
+    $params = array('itemname'=>$eq->name, 'idnumber'=>$eq->cmidnumber);
+
+    if ($grades  === 'reset') {
+        $params['reset'] = true;
+        $grades = null;
+    }
+    return grade_update(EQUELLA_SOURCE,
+                        $eq->courseid,
+                        EQUELLA_ITEM_TYPE,
+                        EQUELLA_ITEM_MODULE,
+                        $eq->id,
+                        0,
+                        $grades,
+                        $params);
+}
+
+function equella_get_user_grades($equella, $userid = 0) {
+    $grades = grade_get_grades($equella->course, EQUELLA_ITEM_TYPE, EQUELLA_ITEM_MODULE,
+        $equella->id, $userid);
+
+    if (isset($grades) && isset($grades->items[0]) && is_array($grades->items[0]->grades)) {
+        foreach($grades->items[0]->grades as $agrade) {
+            $grade = $agrade->grade;
+            return $grade;
+            break;
+        }
+    }
+    return null;
+}
+
+/**
+ * delete all grades
+ */
+function equella_grade_item_delete($eq) {
+    global $CFG;
+    require_once($CFG->libdir.'/gradelib.php');
+
+    return grade_update(EQUELLA_SOURCE, $eq->courseid, EQUELLA_ITEM_TYPE, EQUELLA_ITEM_MODULE, $eq->id, 0, NULL, array('deleted'=>1));
 }

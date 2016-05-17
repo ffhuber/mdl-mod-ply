@@ -13,6 +13,17 @@
 //
 // You should have received a copy of the GNU General Public License
 // along with Moodle. If not, see <http://www.gnu.org/licenses/>.
-header('content-type: text/plain');
+namespace mod_equella\task;
 
-readfile('ChangeLog');
+if (class_exists('core\\task\\scheduled_task')) {
+    class cron_task extends \core\task\scheduled_task {
+        public function get_name() {
+            return get_string('crontask', 'mod_equella');
+        }
+
+        public function execute() {
+            global $CFG;
+            require_once($CFG->dirroot . '/mod/equella/lib.php');
+        }
+    }
+}

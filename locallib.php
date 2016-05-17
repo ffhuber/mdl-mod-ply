@@ -1,5 +1,5 @@
 <?php
-// This file is part of the EQUELLA Moodle Integration - https://github.com/equella/moodle-module
+// This file is part of the EQUELLA module - http://git.io/vUuof
 //
 // Moodle is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -19,10 +19,8 @@
  */
 defined('MOODLE_INTERNAL') || die();
 require_once ($CFG->libdir . '/oauthlib.php');
+require_once ($CFG->dirroot . '/mod/equella/lib.php');
 
-define('EQUELLA_ITEM_TYPE', 'mod');
-define('EQUELLA_ITEM_MODULE', 'equella');
-define('EQUELLA_SOURCE', 'mod/equella');
 function equella_get_course_contents($courseid, $sectionid) {
     global $DB, $CFG;
 
@@ -64,6 +62,7 @@ function equella_get_course_contents($courseid, $sectionid) {
             $sectionvalues->folders = array();
             $sectioncontents = array();
 
+			// added by Franz Prsn
             if (!isset($modinfo->sections[$section->section])) {
                 $modinfo->sections[$section->section] = array();
             }
@@ -113,7 +112,16 @@ function equella_embed_general($equella) {
     // IE can not embed stuff properly, that is why we use iframe instead.
     // Unfortunately this tag does not validate in xhtml strict mode,
     // but in any case it is undeprecated in HTML 5 - we will use it everywhere soon!
-    if (check_browser_version('MSIE', 5) || $CFG->equella_enable_lti) {
+    $ie5 = false;
+    $vendor = 'MSIE';
+    $version = 5;
+    if (method_exists('core_useragent', 'check_browser_version')) {
+        $ie5 = core_useragent::check_browser_version($vendor, $version);
+    } else {
+        $ie5 = check_browser_version($vendor, $version);
+    }
+
+    if ($ie5 || $CFG->equella_enable_lti) {
         $iframe = true;
     }
 
@@ -160,13 +168,13 @@ function equella_select_dialog($args) {
     if ($CFG->equella_enable_lti) {
         $args->action = 'select';
         $launchurl = new moodle_url('/mod/equella/ltilaunch.php', (array)$args);
-        $objecturl = $launchurl->out();
+        $objecturl = $launchurl->out(false);
     } else {
         if ($CFG->equella_action == EQUELLA_ACTION_STRUCTURED) {
             $redirecturl = new moodle_url('/mod/equella/redirectselection.php', array('equellaurl' => $equrl->out(false),'courseid' => $args->course,'sectionid' => $args->section));
             $objecturl = $redirecturl->out(false);
         } else {
-            $objecturl = $equrl->out();
+            $objecturl = $equrl->out(false);
         }
     }
 
@@ -210,9 +218,10 @@ function equella_parse_query($str) {
     return $op;
 }
 function equella_build_integration_url($args, $appendtoken = true) {
+    // modified by Franz
     global $COURSE, $USER, $CFG, $DB;
 
-    // get course information
+    // get course information - added by Franz
     $idnumber = $COURSE->idnumber;
     $id = $COURSE->id;
     $short = $COURSE->shortname;
@@ -224,7 +233,6 @@ function equella_build_integration_url($args, $appendtoken = true) {
         <moodlecourseshortname>'.$short.'</moodlecourseshortname>
         <moodlecoursefullname>'.$full.'</moodlecoursefullname>
     </integration></xml>';
-
 
     $callbackurlparams = array('course' => $args->course,'section' => $args->section);
 
@@ -249,7 +257,23 @@ function equella_build_integration_url($args, $appendtoken = true) {
     $callbackurl = new moodle_url('/mod/equella/callbackmulti.php', $callbackurlparams);
     $cancelurl = new moodle_url('/mod/equella/cancel.php', array('course' => $args->course));
 
-    $equrlparams = array('method' => 'lms','attachmentUuidUrls' => 'true','returnprefix' => 'tle','template' => 'standard','courseId' => equella_get_courseId($args->course),'action' => $CFG->equella_action,'selectMultiple' => 'true','returnurl' => $callbackurl->out(false),'cancelurl' => $cancelurl->out(false),'itemXml'=>$integrationXML);
+    $coursecode = equella_get_coursecode($args->course);
+    $equrlparams = array(
+        'method' => 'lms',
+        'attachmentUuidUrls' => 'true',
+        'returnprefix' => 'tle',
+        'template' => 'standard',
+    //    'courseId' => $args->course, // removed/chgd by Franz
+        'courseId' => equella_get_courseId($args->course),
+        'courseCode' => $coursecode,
+        'action' => $CFG->equella_action,
+        'selectMultiple' => 'true',
+        'cancelDisabled' => 'true',
+        'returnurl' => $callbackurl->out(false),
+        'cancelurl' => $cancelurl->out(false),
+        'itemXml' => $integrationXML) // added by Franz
+    );
+
     if ($appendtoken) {
         $course = $DB->get_record('course', array('id' => $args->course), '*', MUST_EXIST);
         $equrlparams['token'] = equella_getssotoken($course);
@@ -263,6 +287,7 @@ function equella_build_integration_url($args, $appendtoken = true) {
 
     return new moodle_url($CFG->equella_url, $equrlparams);
 }
+
 function equella_lti_params($equella, $course, $extra = array()) {
     global $USER, $CFG;
 
@@ -278,7 +303,8 @@ function equella_lti_params($equella, $course, $extra = array()) {
 
     $role = equella_lti_roles($USER, $equella->cmid, $equella->course);
 
-    $requestparams = array('resource_link_id' => $equella->id,'resource_link_title' => $equella->name,'resource_link_description' => $equella->intro,'user_id' => $USER->id,'roles' => $role,'context_id' => $course->id,'context_label' => $course->shortname,
+// Franz: changes by Clem?:  $requestparams = array('resource_link_id' => $equella->id,'resource_link_title' => $equella->name,'resource_link_description' => $equella->intro,'user_id' => $USER->id,'roles' => $role,'context_id' => $course->id,'context_label' => $course->shortname,
+    $requestparams = array('resource_link_id' => $CFG->siteidentifier . ':mod_equella:' . $equella->cmid,'resource_link_title' => $equella->name,'resource_link_description' => $equella->intro,'user_id' => $USER->id,'roles' => $role,'context_id' => $course->id,'context_label' => $course->shortname,
         'context_title' => $course->fullname,'launch_presentation_locale' => current_language());
     if (!empty($equella->popup)) {
         $requestparams['launch_presentation_document_target'] = 'window';
@@ -441,10 +467,9 @@ class equella_lti_oauth extends oauth_helper {
     }
     public static function verify_message($message) {
         global $CFG;
-        // TODO: Switch to core oauthlib once implemented - MDL-30149
-        require_once ($CFG->dirroot . '/mod/lti/OAuthBody.php');
+        require_once dirname(__FILE__) . '/' . 'oauthlocallib.php';
         try {
-            moodle\mod\lti\handleOAuthBodyPOST($CFG->equella_lti_oauth_key, $CFG->equella_lti_oauth_secret, $message);
+            moodle\mod\equella\handle_oauth_body_post($CFG->equella_lti_oauth_key, $CFG->equella_lti_oauth_secret, $message);
         } catch(Exception $e) {
             return false;
         }
@@ -468,17 +493,18 @@ class equella_lti_grading {
         if (empty($description)) {
             $description = $this->messagetype;
         }
-
+        $codemajor = strtolower($codemajor);
         $xml = <<<XML
 <?xml version="1.0" encoding="UTF-8"?>
-<imsx_POXEnvelopeResponse xmlns = "http://www.imsglobal.org/lis/oms1p0/pox">
+// by Franz : to check
+<imsx_POXEnvelopeResponse xmlns = "http://www.imsglobal.org/services/ltiv1p1/xsd/imsoms_v1p0">
     <imsx_POXHeader>
         <imsx_POXResponseHeaderInfo>
             <imsx_version>V1.0</imsx_version>
             <imsx_messageIdentifier>{$messageid}</imsx_messageIdentifier>
             <imsx_statusInfo>
                 <imsx_codeMajor>{$codemajor}</imsx_codeMajor>
-                <imsx_severity>Status</imsx_severity>
+                <imsx_severity>status</imsx_severity>
                 <imsx_description>{$description}</imsx_description>
                 <imsx_messageRefIdentifier>{$this->messageid}</imsx_messageRefIdentifier>
             </imsx_statusInfo>
@@ -589,37 +615,21 @@ XML;
     private function transform_grade($rawgrade) {
         return $rawgrade * self::LTI_LIS_GRADE_FACTOR;
     }
+
     private function update_grade($equella, $data) {
-        global $CFG, $DB;
-        require_once ($CFG->libdir . '/gradelib.php');
-
-        $item = array();
-        $item['itemname'] = $equella->name;
-
         $grade = new stdClass();
         $grade->userid = $data->userid;
         $grade->rawgrade = $this->transform_grade($data->rawgrade);
 
-        $status = grade_update(EQUELLA_SOURCE, $equella->course, EQUELLA_ITEM_TYPE, EQUELLA_ITEM_MODULE, $equella->id, 0, $grade, $item);
+        $status = equella_grade_item_update($equella, $grade);
 
         return $status == GRADE_UPDATE_OK;
     }
+
     private function read_grade($equella, $data) {
-        global $CFG;
-        require_once ($CFG->libdir . '/gradelib.php');
-
-        $grades = grade_get_grades($equella->course, EQUELLA_ITEM_TYPE, EQUELLA_ITEM_MODULE, $equella->id, $data->userid);
-
-        if (isset($grades) && isset($grades->items[0]) && is_array($grades->items[0]->grades)) {
-            foreach($grades->items[0]->grades as $agrade) {
-                $grade = $agrade->grade;
-                return $grade;
-                break;
-            }
-        }
-
-        return null;
+        return equella_get_user_grades($equella, $data->userid);
     }
+
     private function delete_grade($equella, $data) {
         global $CFG;
         require_once ($CFG->libdir . '/gradelib.php');
@@ -640,7 +650,7 @@ XML;
                     $data = $this->parse_replace_message();
                     $this->handle_replace_message($data);
                 } catch(Exception $ex) {
-                    $responsexml = $this->get_response_xml('Error', $ex->getMessage());
+                    $responsexml = $this->get_response_xml('error', $ex->getMessage());
                     echo $responsexml->asXML();
                 }
                 break;
@@ -649,7 +659,7 @@ XML;
                     $data = $this->parse_grade_message();
                     $this->handle_read_message($data);
                 } catch(Exception $ex) {
-                    $responsexml = $this->get_response_xml('Error', $ex->getMessage());
+                    $responsexml = $this->get_response_xml('error', $ex->getMessage());
                     echo $responsexml->asXML();
                 }
                 break;
@@ -661,7 +671,7 @@ XML;
                 }
                 break;
             default:
-                $responsexml = $this->get_response_xml('Unsupported', 'Unsupported request');
+                $responsexml = $this->get_response_xml('unsupported', 'Unsupported request');
                 echo $responsexml->asXML();
                 break;
         }

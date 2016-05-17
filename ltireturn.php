@@ -1,6 +1,5 @@
 <?php
-
-// This file is part of the EQUELLA Moodle Integration - https://github.com/equella/moodle-module
+// This file is part of the EQUELLA module - http://git.io/vUuof
 //
 // Moodle is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -19,8 +18,14 @@ require_once ($CFG->dirroot . '/mod/equella/lib.php');
 require_once ($CFG->dirroot . '/mod/equella/locallib.php');
 
 require_login();
-
 $courseid = required_param('courseid', PARAM_INT);
+
+$course = $DB->get_record('course', array('id' => $courseid), '*', MUST_EXIST);
+
+$context = context_course::instance($courseid);
+$PAGE->set_context($context);
+$PAGE->set_pagelayout('embedded');
+
 $instanceid = required_param('instanceid', PARAM_INT);
 $ltierrormsg = optional_param('lti_errormsg', '', PARAM_RAW);
 $ltimsg = optional_param('lti_msg', '', PARAM_RAW);
@@ -29,7 +34,9 @@ $course = $DB->get_record('course', array('id' => $courseid));
 
 if (!empty($ltierrormsg) || !empty($ltimsg)) {
     $message = '';
+    $htmlclasses = 'notifysuccess';
     if (!empty($ltierrormsg)) {
+        $htmlclasses = 'notifyproblem';
         $message = $ltierrormsg;
     } else {
         $message = $ltimsg;
@@ -43,7 +50,7 @@ if (!empty($ltierrormsg) || !empty($ltimsg)) {
     $PAGE->set_pagelayout('embedded');
 
     echo $OUTPUT->header();
-    echo htmlspecialchars($message);
+    echo $OUTPUT->notification($message, $htmlclasses);
     echo $OUTPUT->footer();
 } else {
     $courseurl = new moodle_url('/course/view.php', array('id' => $courseid));

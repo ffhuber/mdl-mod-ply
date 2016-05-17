@@ -13,6 +13,12 @@
 //
 // You should have received a copy of the GNU General Public License
 // along with Moodle. If not, see <http://www.gnu.org/licenses/>.
-header('content-type: text/plain');
 
-readfile('ChangeLog');
+namespace mod_equella\event;
+
+defined('MOODLE_INTERNAL') || die();
+if (class_exists('core\\event\\course_module_instance_list_viewed')) {
+    class course_module_instance_list_viewed extends \core\event\course_module_instance_list_viewed {
+        // No need for any code here as everything is handled by the parent class.
+    }
+}

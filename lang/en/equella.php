@@ -1,6 +1,5 @@
 <?php
-
-// This file is part of the EQUELLA Moodle Integration - https://github.com/equella/moodle-module
+// This file is part of the EQUELLA module - http://git.io/vUuof
 //
 // Moodle is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -26,8 +25,10 @@ $string['noinstances'] = 'There are no EQUELLA Resources in this course';
 $string['modulenameplural'] = 'EQUELLA Resources';
 $string['notsubmittedyet'] = 'EQUELLA resource not submitted yet';
 $string['clicktoopen'] = 'Click {$a} link to open resource.';
+$string['crontask'] = 'EQUELLA cron task';
 // Course page drag and drop dialog
 $string['dnduploadresource'] = 'Contribute to EQUELLA';
+$string['dnduploadresourcemetadata'] = 'Contribute to EQUELLA with meta data';
 $string['mustloggintoview'] = 'Please log in to view this page.';
 
 ////////////////////////////////////////////////////////
@@ -131,6 +132,7 @@ $string['interceptfilesintro'] = 'Select the action required when dragging and d
 $string['interceptnone'] = 'Don\'t intercept files';
 $string['interceptauto'] = 'Auto contribute files in EQUELLA';
 $string['interceptask']  = 'Display file destination dialog';
+$string['interceptmetadata']  = 'Auto contribute file to EQUELLA with meta data';
 
 ////////////////////////////////////////////////////////
 // EQUELLA Resource Checker

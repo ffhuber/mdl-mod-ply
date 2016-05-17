@@ -1,6 +1,5 @@
 <?php
-
-// This file is part of the EQUELLA Moodle Integration - https://github.com/equella/moodle-module
+// This file is part of the EQUELLA module - http://git.io/vUuof
 //
 // Moodle is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -40,10 +39,16 @@ foreach($links as $link) {
     $mod->introformat = FORMAT_HTML;
     $mod->attachmentuuid = $link['attachmentUuid'];
     $mod->url = $link['url'];
+    $mod->metadata = serialize($link);
     $targetsection = $sectionnum;
+
     // if equella returns section id, overwrite moodle section parameter
     if (isset($link['folder']) && $link['folder'] != null) {
         $targetsection = clean_param($link['folder'], PARAM_INT);
+    }
+
+    if (isset($link['filename'])) {
+        $mod->filename = clean_param($link['filename'], PARAM_FILE);
     }
 
     if (isset($link['mimetype'])) {
@@ -51,9 +56,11 @@ foreach($links as $link) {
     } else {
         $mod->mimetype = mimeinfo('type', $mod->url);
     }
+
     if (isset($link['activationUuid'])) {
         $mod->activation = $link['activationUuid'];
     }
+
     $equellaid = equella_add_instance($mod);
 
     $mod->instance = $equellaid;
@@ -74,16 +81,21 @@ foreach($links as $link) {
 
     set_coursemodule_visible($mod->coursemodule, true);
 
-    $eventdata = new stdClass();
-    $eventdata->modulename = $mod->modulename;
-    $eventdata->name = $mod->name;
-    $eventdata->cmid = $mod->coursemodule;
-    $eventdata->courseid = $mod->course;
-    $eventdata->userid = $USER->id;
-    events_trigger('mod_created', $eventdata);
-
-    $url = "view.php?id={$mod->coursemodule}";
-    add_to_log($mod->course, $mod->modulename, 'add equella resource', $url, "$mod->modulename ID: $mod->instance", $mod->instance);
+    if (class_exists('core\\event\\course_module_created')) {
+        $cm = get_coursemodule_from_id('equella', $mod->coursemodule, 0, false, MUST_EXIST);
+        $event = \core\event\course_module_created::create_from_cm($cm);
+        $event->trigger();
+    } else {
+        $eventdata = new stdClass();
+        $eventdata->modulename = $mod->modulename;
+        $eventdata->name = $mod->name;
+        $eventdata->cmid = $mod->coursemodule;
+        $eventdata->courseid = $mod->course;
+        $eventdata->userid = $USER->id;
+        events_trigger('mod_created', $eventdata);
+        $url = "view.php?id={$mod->coursemodule}";
+        add_to_log($mod->course, $mod->modulename, 'add equella resource', $url, "$mod->modulename ID: $mod->instance", $mod->instance);
+    }
 }
 
 $courseurl = new moodle_url('/course/view.php', array('id' => $courseid));
