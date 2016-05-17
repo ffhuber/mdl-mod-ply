@@ -460,5 +460,5 @@ function equella_get_view_actions() {
  * @return array
  */
 function equella_get_post_actions() {
-    return array('add','update','delete','update equella resource','delete equella resource','add equella resource');
+    return array('add','update','delete','update equella resource','delete equella resource','add equella resource','add EQUELLA');
 }
